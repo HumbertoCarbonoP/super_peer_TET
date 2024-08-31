@@ -35,16 +35,15 @@ def register_peer():
         # Actualizar el diccionario global de archivos compartidos
         shared_files.update(peer_files)
 
-        # Notificar al nuevo peer sobre los archivos compartidos
-        requests.post(f"http://{peer_address}/update_shared_files", json={"shared_files": shared_files})
-
-        # Notificar a otros vecinos sobre el nuevo peer y su lista de archivos
+        # Forzar sincronización: Solicitar la lista completa de archivos a los otros peers
         for peer in neighbour_peers:
             if peer != peer_address:
                 try:
-                    requests.post(f"http://{peer}/register_peer", json={"peer_address": peer_address, "peer_files": peer_files})
+                    response = requests.get(f"http://{peer}/get_shared_files")
+                    if response.status_code == 200:
+                        shared_files.update(response.json())
                 except requests.exceptions.RequestException as e:
-                    print(f"Error notifying peer {peer}: {e}")
+                    print(f"Error synchronizing with peer {peer}: {e}")
 
         print(f"Peer {peer_address} registered with files: {peer_files}")
         return jsonify({"message": "Peer registered successfully"}), 200
