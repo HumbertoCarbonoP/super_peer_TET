@@ -10,6 +10,7 @@ shared_files = {}  # Diccionario global de archivos compartidos
 
 # Configuración dinámica del peer
 def initialize_peer(directory):
+    global files
     for filename in os.listdir(directory):
         filepath = os.path.join(directory, filename)
         if os.path.isfile(filepath):
@@ -27,23 +28,28 @@ def search_file():
 def register_peer():
     data = request.get_json()
     peer_address = data.get('peer_address')
-    peer_files = data.get('peer_files')
     
     if peer_address not in neighbour_peers:
         neighbour_peers.add(peer_address)
         
-        # Actualizar el diccionario global de archivos compartidos
+        # Actualizar el diccionario global de archivos compartidos con los archivos recibidos del nuevo peer
+        peer_files = data.get('peer_files', {})
         shared_files.update(peer_files)
 
-        # Forzar sincronización: Solicitar la lista completa de archivos a los otros peers
+        # Notificar al nuevo peer sobre los archivos compartidos
+        response = requests.post(f"http://{peer_address}/update_shared_files", json={"shared_files": shared_files})
+        if response.status_code == 200:
+            print(f"Shared files updated successfully on peer {peer_address}")
+
+        # Notificar a otros vecinos sobre el nuevo peer y su lista de archivos
         for peer in neighbour_peers:
             if peer != peer_address:
                 try:
-                    response = requests.get(f"http://{peer}/get_shared_files")
+                    response = requests.post(f"http://{peer}/register_peer", json={"peer_address": peer_address, "peer_files": peer_files})
                     if response.status_code == 200:
-                        shared_files.update(response.json())
+                        print(f"Peer {peer} successfully notified of new peer {peer_address}")
                 except requests.exceptions.RequestException as e:
-                    print(f"Error synchronizing with peer {peer}: {e}")
+                    print(f"Error notifying peer {peer}: {e}")
 
         print(f"Peer {peer_address} registered with files: {peer_files}")
         return jsonify({"message": "Peer registered successfully"}), 200
@@ -81,6 +87,9 @@ if __name__ == '__main__':
 
     # Inicializar el peer con el directorio especificado
     initialize_peer(args.directory)
+
+    # Obtener la lista de archivos automáticamente
+    peer_files = files
 
     # Ejecutar la aplicación Flask en el puerto especificado
     app.run(host='0.0.0.0', port=args.port)
