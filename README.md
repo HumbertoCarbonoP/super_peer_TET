@@ -1,12 +1,7 @@
 # info de la materia: STxxxx <nombre>
-#
 # Estudiante(s): Humberto Antonio Carbonó, David Elias Franco Velez - hacarbonop@eafit.edu.co, defrancov@eafit.edu.co
-#
 # Profesor: Alvaro Enrique Ospina, aeospinas@eafit.edu.co
-#
-
 # Arquitectura P2P y Comunicación entre procesos mediante API REST, RPC y MOM
-#
 # 1. Breve descripción de la actividad
 
 Este código implementa un sistema distribuido de compartición de archivos entre pares (peers) utilizando Flask como marco para las APIs REST. En este sistema, múltiples nodos (o peers) pueden registrarse con un nodo central (superpeer), y luego pueden compartir y buscar archivos entre ellos.
@@ -18,25 +13,20 @@ Cada peer tiene un directorio local de archivos que comparte en la red. Los peer
 
 ### Flujo básico
 1. Un peer se registra con el superpeer enviando su dirección y lista de archivos.
-El superpeer distribuye la información del nuevo peer a los demás peers ya registrados.
+2. El superpeer distribuye la información del nuevo peer a los demás peers ya registrados.
 
-2. Un peer puede buscar un archivo en su directorio local o en el de otros peers a través de la red.
-Si el archivo se encuentra en otro peer, se puede descargar utilizando el endpoint correspondiente.
-3. Los peers actualizan la información de los otros peers cuando se registran nuevos nodos en la red, permitiendo que la red se mantenga dinámica y actualizada.
-Este sistema es una implementación básica de un entorno P2P donde los nodos pueden comunicarse directamente entre sí para compartir archivos sin necesidad de un servidor centralizado, salvo para la función de registro inicial.
+3. Un peer puede buscar un archivo en su directorio local o en el de otros peers a través de la red.
+4. Si el archivo se encuentra en otro peer, se puede descargar utilizando el endpoint correspondiente.
+5. Los peers actualizan la información de los otros peers cuando se registran nuevos nodos en la red, permitiendo que la red se mantenga dinámica y actualizada.
 
 ## 1.1. ¿Qué aspectos cumplió o desarrolló de la actividad propuesta por el profesor (requerimientos funcionales y no funcionales)
 
 ### Requerimientos Funcionales
 - Se ha desarrollado un sistema Peer-to-Peer (P2P) donde los peers (nodos) pueden interactuar entre sí para compartir archivos. El sistema incluye un peer especial denominado "superpeer" (register.py) que gestiona el registro y la distribución de información sobre los peers en la red.
-
 - Se ha implementado la funcionalidad para que los peers se registren en el superpeer mediante un endpoint '<b>/register_peer</b>'. Este registro incluye el envío de la dirección del peer y la lista de archivos locales que están disponibles para compartir.
-El superpeer mantiene un registro de todos los nodos y sus archivos, y distribuye esta información a todos los demás nodos registrados para que cada uno tenga un mapa actualizado de los archivos disponibles en la red.
-
-- Los peers pueden buscar archivos en su propia lista de archivos locales, así como en la lista de archivos de los peers vecinos que han registrado en el superpeer. Si el archivo no está disponible localmente, el peer consulta a sus vecinos para encontrar y descargar el archivo solicitado mediante el endpoint /search_file.
-
+- El superpeer mantiene un registro de todos los nodos y sus archivos, y distribuye esta información a todos los demás nodos registrados para que cada uno tenga un mapa actualizado de los archivos disponibles en la red.
+- Los peers pueden buscar archivos en su propia lista de archivos locales, así como en la lista de archivos de los peers vecinos que han registrado en el superpeer. Si el archivo no está disponible localmente, el peer consulta a sus vecinos para encontrar y descargar el archivo solicitado mediante el endpoint <b>/search_file</b>.
 - Cada vez que un nuevo nodo se registra en la red, se notifica a los demas nodos mediante el endpoint '<b>update_neighbors</b>' actualizando la lista de archivos compartidos por cada peer
-
 - Se implementó la gestión de errores en las solicitudes HTTP entre nodos, manejando situaciones en las que un nodo no responde o no se puede contactar, y asegurando que estas fallas no afecten el funcionamiento global del sistema.
 
 ### Requerimientos no Funcionales
@@ -44,8 +34,6 @@ El superpeer mantiene un registro de todos los nodos y sus archivos, y distribuy
 - El sistema se diseñó para minimizar la latencia y optimizar la comunicación entre peers, utilizando peticiones HTTP directas y estructuras de datos eficientes para la gestión de archivos y peers.
 
 - El código se ha organizado en funciones y rutas claramente definidas, lo que facilita la extensión y mantenimiento del sistema. La separación del superpeer y los peers en diferentes scripts también contribuye a la modularidad del sistema.
-
-- Se proporcionan rutas simples y bien definidas para que los peers se registren y busquen archivos, con respuestas JSON claras que permiten a los peers interpretar fácilmente los resultados.
 
 ## 1.2. ¿Qué aspectos NO cumplió o desarrolló de la actividad propuesta por el profesor? (requerimientos funcionales y no funcionales)
 El servicio no se desplegó dado que no se consideró necesario para el alcance del reto. Además, debido a limitaciones de tiempo, se priorizaron otros aspectos del proyecto que eran más críticos para cumplir con los objetivos principales de la actividad.
@@ -55,6 +43,9 @@ La implementación se está llevando a cabo de manera local, lo que permite real
 # 2. información general de diseño de alto nivel, arquitectura, patrones, mejores prácticas utilizadas.
 
 ## Arquitectura
+
+<img src='./Arquitectura p2p.png'></img>
+
 El sistema sigue una arquitectura Peer-to-Peer (P2P) con un superpeer central que gestiona el registro de peers y distribuye información. Los peers normales se registran en el superpeer, comparten archivos, y pueden buscar y descargar archivos de otros peers.
 
 ## Patrones de Diseño
@@ -136,10 +127,11 @@ Este proyecto utiliza un enfoque modular donde los parámetros clave, como la IP
 Este proyecto no se desplego, por lo que para ejecutarlo se debe hacer en la terminal.
 
 # referencias:
-<debemos siempre reconocer los créditos de partes del código que reutilizaremos, así como referencias a youtube, o referencias bibliográficas utilizadas para desarrollar el proyecto o la actividad>
 
 "Designing Data-Intensive Applications" by Martin Kleppmann
 <br>
 "Peer-to-Peer: Harnessing the Power of Disruptive Technologies" by Andy Oram (Editor)
+<br>
 https://docs.python.org/3/
+<br>
 https://flask.palletsprojects.com/en/3.0.x/
