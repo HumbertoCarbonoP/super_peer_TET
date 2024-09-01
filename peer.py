@@ -1,6 +1,9 @@
-from flask import Flask, request, jsonify
+import time
+import threading
 import os
 import requests
+from flask import Flask, request, jsonify
+
 
 app = Flask(__name__)
 
@@ -16,6 +19,37 @@ def initialize_peer(directory):
         if os.path.isfile(filepath):
             files[filename] = filepath
             shared_files[filename] = filepath  # Inicialmente los archivos locales son los compartidos
+            
+def poll_for_changes(directory, interval=10):
+    global files, shared_files
+
+    while True:
+        current_files = {}
+        for filename in os.listdir(directory):
+            filepath = os.path.join(directory, filename)
+            if os.path.isfile(filepath):
+                current_files[filename] = filepath
+
+        # Detectar archivos nuevos
+        new_files = {k: v for k, v in current_files.items() if k not in files}
+        
+        # Actualizar si se encuentran nuevos archivos
+        if new_files:
+            files.update(new_files)
+            shared_files.update(new_files)
+            print(f"Nuevos archivos detectados: {new_files}")
+
+            # Propagar los nuevos archivos a los vecinos
+            for peer in neighbour_peers:
+                try:
+                    response = requests.post(f"http://{peer}/update_shared_files", json={"shared_files": new_files})
+                    if response.status_code == 200:
+                        print(f"Archivos actualizados correctamente en peer {peer}")
+                except requests.exceptions.RequestException as e:
+                    print(f"Error al notificar a peer {peer}: {e}")
+
+        time.sleep(interval)
+        
 
 @app.route('/search_file', methods=['GET'])
 def search_file():
@@ -78,7 +112,7 @@ def home():
 
 if __name__ == '__main__':
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Start a P2P peer")
     parser.add_argument('--port', type=int, required=True, help="Port number to run the peer on")
     parser.add_argument('--directory', type=str, required=True, help="Directory where peer's files are stored")
@@ -88,8 +122,10 @@ if __name__ == '__main__':
     # Inicializar el peer con el directorio especificado
     initialize_peer(args.directory)
 
-    # Obtener la lista de archivos automáticamente
-    peer_files = files
+    # Iniciar el sondeo de cambios en segundo plano
+    polling_thread = threading.Thread(target=poll_for_changes, args=(args.directory,))
+    polling_thread.daemon = True  # Para que el thread se cierre cuando el programa termina
+    polling_thread.start()
 
     # Ejecutar la aplicación Flask en el puerto especificado
     app.run(host='0.0.0.0', port=args.port)
